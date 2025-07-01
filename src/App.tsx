@@ -27,7 +27,7 @@ function App() {
         <div style={{ display: sidebarOpen ? 'none' : 'block' }} >
           <Sidebar />
         </div>
-        <main className={`p-6 flex-1 ${sidebarOpen ? 'ml-0' : 'ml-64'} transition-all duration-300 ease-in-out`}>
+        <main className={`flex-1 ${sidebarOpen ? 'ml-0' : 'ml-64'} transition-all duration-300 ease-in-out`}>
           <button
             className="fixed top-4 left-4 z-50 p-2 bg-gray-900 text-white rounded"
             onClick={() => setSidebarOpen(!sidebarOpen)}

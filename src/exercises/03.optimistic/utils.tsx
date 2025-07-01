@@ -1,41 +1,32 @@
-import { type Ship } from './api.server.ts'
-
-export type { Ship }
-
-export async function createShip(formData: FormData, delay?: number) {
-	const searchParams = new URLSearchParams()
-	if (delay) searchParams.set('delay', String(delay))
-	const r = await fetch(`api/create-ship?${searchParams.toString()}`, {
-		method: 'POST',
-		body: formData,
-	})
-	if (!r.ok) {
-		throw new Error(await r.text())
-	}
+export type Pokemon = {
+	name: string
+	id: number
+	abilities: Array<{
+		slot: number
+		ability: {
+			name: string
+			url: string
+		}
+	}>
 }
 
-const shipCache = new Map<string, Promise<Ship>>()
+export async function getPokemon(name: string, delay?: number): Promise<Pokemon> {
+	if (delay) await new Promise((res) => setTimeout(res, delay))
 
-export function getShip(name: string, delay?: number) {
-	const shipPromise = shipCache.get(name) ?? getShipImpl(name, delay)
-	shipCache.set(name, shipPromise)
-	return shipPromise
-}
-
-async function getShipImpl(name: string, delay?: number) {
-	const searchParams = new URLSearchParams({ name })
-	if (delay) searchParams.set('delay', String(delay))
-	const response = await fetch(`api/get-ship?${searchParams.toString()}`)
+	const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`)
 	if (!response.ok) {
-		return Promise.reject(new Error(await response.text()))
+		const message = await response.text()
+		return Promise.reject(new Error(`Failed to fetch Pokémon: ${message}`))
 	}
-	const ship = await response.json()
-	return ship as Ship
+	const pokemon = await response.json()
+	return pokemon as Pokemon
 }
 
-export function getImageUrlForShip(
-	shipName: string,
-	{ size }: { size: number },
-) {
-	return `/img/ships/${shipName.toLowerCase().replaceAll(' ', '-')}.webp?size=${size}`
+export function getImageUrlForPokemon(
+	pokemonName: string
+): string {
+	// Replace this with a third-party sprite service or fallback to the default one
+	const sanitized = pokemonName.toLowerCase().replace(/\s+/g, '-')
+	console.warn(`Using default image URL for Pokémon: ${sanitized}`)
+	return `https://img.pokemondb.net/artwork/large/${sanitized}.jpg`
 }

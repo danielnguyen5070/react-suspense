@@ -1,30 +1,32 @@
-import { type Ship } from './api.server.ts'
-
-export type { Ship }
-
-// 🐨 create a shipCache Map that's got string keys and values are Promise<Ship>
-
-// 🐨 export a new function called getShip (you'll rename the one below).
-//   - it should take a name and optional delay number
-//   - it should check the shipCache for the shipPromise by the name
-//   - if it can't find one, it should call getShipImpl and store the promise in the cache
-//   - then it should return the shipPromise
-
-// 🐨 rename this function to getShipImpl and remove the export
-export async function getShip(name: string, delay?: number) {
-	const searchParams = new URLSearchParams({ name })
-	if (delay) searchParams.set('delay', String(delay))
-	const response = await fetch(`api/get-ship?${searchParams.toString()}`)
-	if (!response.ok) {
-		return Promise.reject(new Error(await response.text()))
-	}
-	const ship = await response.json()
-	return ship as Ship
+export type Pokemon = {
+	name: string
+	id: number
+	abilities: Array<{
+		slot: number
+		ability: {
+			name: string
+			url: string
+		}
+	}>
 }
 
-export function getImageUrlForShip(
-	shipName: string,
-	{ size }: { size: number },
-) {
-	return `/img/ships/${shipName.toLowerCase().replaceAll(' ', '-')}.webp?size=${size}`
+export async function getPokemon(name: string, delay?: number): Promise<Pokemon> {
+	if (delay) await new Promise((res) => setTimeout(res, delay))
+
+	const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`)
+	if (!response.ok) {
+		const message = await response.text()
+		return Promise.reject(new Error(`Failed to fetch Pokémon: ${message}`))
+	}
+	const pokemon = await response.json()
+	return pokemon as Pokemon
+}
+
+export function getImageUrlForPokemon(
+	pokemonName: string
+): string {
+	// Replace this with a third-party sprite service or fallback to the default one
+	const sanitized = pokemonName.toLowerCase().replace(/\s+/g, '-')
+	console.warn(`Using default image URL for Pokémon: ${sanitized}`)
+	return `https://img.pokemondb.net/artwork/large/${sanitized}.jpg`
 }

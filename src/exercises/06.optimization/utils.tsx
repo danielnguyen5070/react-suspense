@@ -1,69 +1,32 @@
-import { type Ship, type ShipSearch } from './api.server.ts'
-
-export type { Ship, ShipSearch }
-
-const shipCache = new Map<string, Promise<Ship>>()
-
-export function getShip(name: string, delay?: number) {
-	const shipPromise = shipCache.get(name) ?? getShipImpl(name, delay)
-	shipCache.set(name, shipPromise)
-	return shipPromise
+export type Pokemon = {
+	name: string
+	id: number
+	abilities: Array<{
+		slot: number
+		ability: {
+			name: string
+			url: string
+		}
+	}>
 }
 
-async function getShipImpl(name: string, delay?: number) {
-	const searchParams = new URLSearchParams({ name })
-	if (delay) searchParams.set('delay', String(delay))
-	const response = await fetch(`api/get-ship?${searchParams.toString()}`)
+export async function getPokemon(name: string, delay?: number): Promise<Pokemon> {
+	if (delay) await new Promise((res) => setTimeout(res, delay))
+
+	const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`)
 	if (!response.ok) {
-		return Promise.reject(new Error(await response.text()))
+		const message = await response.text()
+		return Promise.reject(new Error(`Failed to fetch Pokémon: ${message}`))
 	}
-	const ship = await response.json()
-	return ship as Ship
+	const pokemon = await response.json()
+	return pokemon as Pokemon
 }
 
-const shipSearchCache = new Map<string, Promise<ShipSearch>>()
-
-export function searchShips(query: string, delay?: number) {
-	const searchPromise =
-		shipSearchCache.get(query) ?? searchShipImpl(query, delay)
-	shipSearchCache.set(query, searchPromise)
-	return searchPromise
-}
-
-async function searchShipImpl(query: string, delay?: number) {
-	const searchParams = new URLSearchParams({ query })
-	if (delay) searchParams.set('delay', String(delay))
-	const response = await fetch(`api/search-ships?${searchParams.toString()}`)
-	if (!response.ok) {
-		return Promise.reject(new Error(await response.text()))
-	}
-	const ship = await response.json()
-	return ship as ShipSearch
-}
-
-const imgCache = new Map<string, Promise<string>>()
-
-export function imgSrc(src: string) {
-	const imgPromise = imgCache.get(src) ?? preloadImage(src)
-	imgCache.set(src, imgPromise)
-	return imgPromise
-}
-
-function preloadImage(src: string) {
-	return new Promise<string>(async (resolve, reject) => {
-		const img = new Image()
-		img.src = src
-		img.onload = () => resolve(src)
-		img.onerror = reject
-	})
-}
-
-// added the version to prevent caching to make testing easier
-const version = Date.now()
-
-export function getImageUrlForShip(
-	shipName: string,
-	{ size }: { size: number },
-) {
-	return `/img/ships/${shipName.toLowerCase().replaceAll(' ', '-')}.webp?size=${size}&version=${version}`
+export function getImageUrlForPokemon(
+	pokemonName: string
+): string {
+	// Replace this with a third-party sprite service or fallback to the default one
+	const sanitized = pokemonName.toLowerCase().replace(/\s+/g, '-')
+	console.warn(`Using default image URL for Pokémon: ${sanitized}`)
+	return `https://img.pokemondb.net/artwork/large/${sanitized}.jpg`
 }

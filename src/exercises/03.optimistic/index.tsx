@@ -1,230 +1,95 @@
-import { Suspense, use, useState, useTransition } from 'react'
-import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
-import { useSpinDelay } from 'spin-delay'
+import React, { Suspense } from 'react'
 import {
-	// 💰 you're going to want this
-	// type Ship,
-	getShip,
-	createShip,
+	getImageUrlForPokemon,
+	getPokemon,
+	type Pokemon,
 } from './utils.tsx'
 
+const pokemonName = 'ditto'
+let pokemon: Pokemon
+const pokemonPromise = getPokemon(pokemonName).then((p) => {
+	pokemon = p
+})
+
 function App() {
-	const [shipName, setShipName] = useState('Dreadnought')
-	const [isTransitionPending, startTransition] = useTransition()
-	const isPending = useSpinDelay(isTransitionPending, {
-		delay: 300,
-		minDuration: 350,
-	})
-	// 🐨 add a useOptimistic call here
-	// 🦺 The type should be a Ship | null, (initialized to null)
-
-	function handleShipSelection(newShipName: string) {
-		startTransition(() => {
-			setShipName(newShipName)
-		})
-	}
-
 	return (
-		<div className="app-wrapper">
-			<ShipButtons shipName={shipName} onShipSelect={handleShipSelection} />
-			<div className="app">
-				<div className="details" style={{ opacity: isPending ? 0.6 : 1 }}>
-					<ErrorBoundary fallback={<ShipError shipName={shipName} />}>
-						<Suspense fallback={<ShipFallback shipName={shipName} />}>
-							{/* 🐨 pass our optimisticShip to ShipDetails here */}
-							<ShipDetails shipName={shipName} />
-						</Suspense>
-					</ErrorBoundary>
+		<div className="min-h-screen bg-gray-100 flex items-start justify-center p-4">
+			<div className="bg-white shadow-xl rounded-2xl max-w-md w-full">
+				<div className="px-6 py-12">
+					<Suspense fallback={<PokemonFallback />}>
+						<PokemonDetails />
+					</Suspense>
 				</div>
 			</div>
-			{/* 🐨 pass the setOptimisticShip function to CreateForm here */}
-			<CreateForm setShipName={setShipName} />
 		</div>
 	)
 }
 
-// 🐨 accept setOptimisticShip here
-function CreateForm({
-	setShipName,
-}: {
-	// 🦺 I'll give this one to you
-	// setOptimisticShip: (ship: Ship | null) => void
-	setShipName: (name: string) => void
-}) {
-	return (
-		<div>
-			<p>Create a new ship</p>
-			<ErrorBoundary FallbackComponent={FormErrorFallback}>
-				<form
-					action={async (formData) => {
-						// 🐨 create an optimistic ship based on the formData
-						// using the createOptimisticShip utility below
-
-						// 🐨 set the optimistic ship
-
-						await createShip(formData, 2000)
-
-						setShipName(formData.get('name') as string)
-					}}
-				>
-					<div>
-						<label htmlFor="shipName">Ship Name</label>
-						<input id="shipName" type="text" name="name" required />
-					</div>
-					<div>
-						<label htmlFor="topSpeed">Top Speed</label>
-						<input id="topSpeed" type="number" name="topSpeed" required />
-					</div>
-					<div>
-						<label htmlFor="image">Image</label>
-						<input
-							id="image"
-							type="file"
-							name="image"
-							accept="image/*"
-							required
-						/>
-					</div>
-					<button type="submit">Create</button>
-				</form>
-			</ErrorBoundary>
-		</div>
-	)
-}
-
-async function createOptimisticShip(formData: FormData) {
-	return {
-		name: formData.get('name') as string,
-		topSpeed: Number(formData.get('topSpeed')),
-		image: await fileToDataUrl(formData.get('image') as File),
-		weapons: [],
-		fetchedAt: '...',
+function PokemonDetails() {
+	if (!pokemon) {
+		throw pokemonPromise
 	}
-}
-
-function fileToDataUrl(file: File) {
-	return new Promise<string>((resolve, reject) => {
-		const reader = new FileReader()
-		reader.onload = () => resolve(reader.result as string)
-		reader.onerror = reject
-		reader.readAsDataURL(file)
-	})
-}
-
-function FormErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
-	return (
-		<div role="alert">
-			There was an error:{' '}
-			<pre style={{ color: 'red', whiteSpace: 'normal' }}>{error.message}</pre>
-			<button onClick={resetErrorBoundary}>Try again</button>
-		</div>
-	)
-}
-
-function ShipButtons({
-	shipName,
-	onShipSelect,
-}: {
-	shipName: string
-	onShipSelect: (shipName: string) => void
-}) {
-	const ships = ['Dreadnought', 'Interceptor', 'Galaxy Cruiser']
 
 	return (
-		<div className="ship-buttons">
-			{ships.map((ship) => (
-				<button
-					key={ship}
-					onClick={() => onShipSelect(ship)}
-					className={shipName === ship ? 'active' : ''}
-				>
-					{ship}
-				</button>
-			))}
-		</div>
-	)
-}
-
-// 🐨 accept an optimisticShip prop here
-function ShipDetails({ shipName }: { shipName: string }) {
-	// 🦉 you can change this delay to control how long loading the resource takes:
-	const delay = 2000
-	// 🐨 if we have an optimisticShip, set the ship to that instead
-	const ship = use(getShip(shipName, delay))
-	return (
-		<div className="ship-info">
-			<div className="ship-info__img-wrapper">
-				<img src={ship.image} alt={ship.name} />
+		<div className="text-center space-y-4">
+			<div className="flex justify-center">
+				<img
+					src={getImageUrlForPokemon(pokemon.name)}
+					alt={pokemon.name}
+					className="w-64 h-64 object-contain"
+				/>
 			</div>
 			<section>
-				<h2>
-					{ship.name}
-					<sup>
-						{ship.topSpeed} <small>lyh</small>
-					</sup>
+				<h2 className="text-2xl font-bold capitalize">
+					{pokemon.name}
+					<sup className="ml-1 text-sm text-gray-500">#{pokemon.id}</sup>
 				</h2>
 			</section>
 			<section>
-				{ship.weapons?.length ? (
-					<ul>
-						{ship.weapons.map((weapon) => (
-							<li key={weapon.name}>
-								<label>{weapon.name}</label>:{' '}
-								<span>
-									{weapon.damage} <small>({weapon.type})</small>
-								</span>
+				{pokemon.abilities.length ? (
+					<ul className="space-y-1">
+						<li className="font-medium text-gray-700">Abilities:</li>
+						{pokemon.abilities.map((t) => (
+							<li key={t.ability.name} className="text-sm">
+								<span className="capitalize text-gray-900">{t.ability.name}</span>
 							</li>
 						))}
 					</ul>
 				) : (
-					<p>NOTE: This ship is not equipped with any weapons.</p>
+					<p className="text-sm text-gray-500">
+						This Pokémon has no type data.
+					</p>
 				)}
 			</section>
-			<small className="ship-info__fetch-time">{ship.fetchedAt}</small>
 		</div>
 	)
 }
 
-function ShipFallback({ shipName }: { shipName: string }) {
+function PokemonFallback() {
 	return (
-		<div className="ship-info">
-			<div className="ship-info__img-wrapper">
-				<img src="/img/fallback-ship.png" alt={shipName} />
+		<div className="text-center space-y-4 animate-pulse">
+			<div className="flex justify-center">
+				<img
+					src="/img/fallback-ship.png"
+					alt={pokemonName}
+					className="w-64 h-64 object-contain opacity-50"
+				/>
 			</div>
 			<section>
-				<h2>
-					{shipName}
-					<sup>
-						XX <small>lyh</small>
-					</sup>
+				<h2 className="text-2xl font-semibold text-gray-400">
+					{pokemonName}
+					<sup className="ml-1 text-sm text-gray-300">XX</sup>
 				</h2>
 			</section>
 			<section>
-				<ul>
-					{Array.from({ length: 3 }).map((_, i) => (
-						<li key={i}>
-							<label>loading</label>:{' '}
-							<span>
-								XX <small>(loading)</small>
-							</span>
+				<ul className="space-y-1">
+					{Array.from({ length: 2 }).map((_, i) => (
+						<li key={i} className="text-sm text-gray-400">
+							<span className="font-medium">Loading</span>: <span>...</span>
 						</li>
 					))}
 				</ul>
 			</section>
-		</div>
-	)
-}
-
-function ShipError({ shipName }: { shipName: string }) {
-	return (
-		<div className="ship-info">
-			<div className="ship-info__img-wrapper">
-				<img src="/img/broken-ship.webp" alt="broken ship" />
-			</div>
-			<section>
-				<h2>There was an error</h2>
-			</section>
-			<section>There was an error loading "{shipName}"</section>
 		</div>
 	)
 }
