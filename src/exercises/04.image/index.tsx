@@ -1,19 +1,13 @@
-import React, { Suspense, use } from "react";
-import { getPokemon, type Pokemon } from "./utils.tsx";
+import React, { Suspense, use, useTransition } from "react";
+import {
+  getImage,
+  getPokemon,
+  searchPokemons,
+  getImageUrlForPokemon,
+  type Pokemon,
+} from "./utils.tsx";
 import { ErrorBoundary } from "react-error-boundary";
 import { useSpinDelay } from "spin-delay";
-
-function ErrorFallback({ error }: { error: Error }) {
-  return (
-    <div className="text-center space-y-4">
-      <h2 className="text-2xl font-semibold text-red-600">Error</h2>
-      <p className="text-sm text-gray-500">{error.message}</p>
-      <p className="text-sm text-gray-500">
-        Please try again later or contact support.
-      </p>
-    </div>
-  );
-}
 
 const pokemonNameDefault = "ditto";
 function App() {
@@ -37,9 +31,16 @@ function App() {
           pokemonName={pokemonName}
           onChange={handlePokemonChange}
         />
-        <div className="bg-white shadow-xl rounded-2xl max-w-sm w-full">
+        <div className="flex flex-row shadow-xl rounded-2xl max-w-full w-full">
+          <div className="px-6 py-4 bg-gray-50 rounded-l-2xl">
+            <PokemonSearch
+              onSelection={(selection) => {
+                startTransition(() => setPokemonName(selection));
+              }}
+            />
+          </div>
           <div
-            className={`px-6 py-12`}
+            className={`px-6 py-12 bg-white`}
             style={{ opacity: delayedPending ? 0.6 : 1 }}
           >
             <ErrorBoundary FallbackComponent={ErrorFallback}>
@@ -63,6 +64,94 @@ function App() {
   );
 }
 
+function PokemonSearch({
+  onSelection,
+}: {
+  onSelection: (selection: string) => void;
+}) {
+  const [searchText, setSearchText] = React.useState<string>("");
+  const [isTransitionPending, startTransition] = useTransition();
+  const isPending = useSpinDelay(isTransitionPending, {
+    delay: 300,
+    minDuration: 350,
+  });
+  return (
+    <div className="mb-6">
+      <div>
+        <input
+          id="ship-name"
+          type="text"
+          placeholder="Search Pokémon"
+          value={searchText}
+          onChange={(e) => startTransition(() => setSearchText(e.target.value))}
+          className="mt-2 block w-full px-3 py-2 border bg-white border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ul
+          className="mt-2 space-y-1 max-h-120 overflow-auto"
+          style={{ opacity: isPending ? 0.6 : 1 }}
+        >
+          <Suspense fallback={<SearchResultsFallback />}>
+            <SearchResults pokemonName={searchText} onSelection={onSelection} />
+          </Suspense>
+        </ul>
+      </ErrorBoundary>
+    </div>
+  );
+}
+
+const shipFallbackSrc = "/img/fallback-ship.png";
+function SearchResultsFallback() {
+  return Array.from({ length: 12 }).map((_, i) => (
+    <li key={i} className="cursor-pointer hover:bg-blue-100 py-2 rounded">
+      <div>
+        <div className="flex items-center space-x-2 px-2">
+          <img
+            src={shipFallbackSrc}
+            className="w-12 h-12 p-2 object-contain bg-white rounded-full shadow-sm"
+          />
+          <span className="text-sm font-medium capitalize">{"Loading..."}</span>
+        </div>
+      </div>
+    </li>
+  ));
+}
+
+function SearchResults({
+  pokemonName,
+  onSelection,
+}: {
+  pokemonName: string;
+  onSelection: (selection: string) => void;
+}) {
+  const searchResults = use(searchPokemons(pokemonName, 500));
+  return (
+    <>
+      {searchResults.map((pokemon) => (
+        <li
+          key={pokemon.name}
+          className="cursor-pointer hover:bg-blue-100 py-2 rounded"
+          onClick={() => onSelection(pokemon.name)}
+        >
+          <div>
+            <div className="flex items-center space-x-2 px-2">
+              <img
+                src={getImageUrlForPokemon(pokemon.name)}
+                alt={pokemon.name}
+                className="w-12 h-12 p-2 object-contain bg-white rounded-full shadow-sm"
+              />
+              <span className="text-sm font-medium capitalize">
+                {pokemon.name}
+              </span>
+            </div>
+          </div>
+        </li>
+      ))}
+    </>
+  );
+}
+
 async function createOptimisticPokemon(formData: FormData) {
   return {
     name: formData.get("name") as string, // This will be rendered by your <PokemonDetails />
@@ -83,6 +172,101 @@ function fileToDataUrl(file: File) {
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function PokemonSelector({
+  pokemonName,
+  onChange,
+}: {
+  pokemonName: string;
+  onChange: (name: string) => void;
+}) {
+  const pokemonsList = ["ditto", "pikachu", "charmander", "bulbasaur"];
+  return (
+    <div className="mb-6">
+      <label
+        htmlFor="pokemon-select"
+        className="block text-sm font-medium text-gray-700"
+      >
+        Select Pokémon:
+      </label>
+      {pokemonsList.map((name) => (
+        <button
+          key={name}
+          onClick={() => onChange(name)}
+          className={`mt-2 mx-2  items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+            name === pokemonName ? "text-red-500" : ""
+          }`}
+        >
+          {name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PokemonImg({
+  src,
+  ...props
+}: { src: string } & React.ComponentProps<"img">) {
+  return (
+    <ErrorBoundary
+      key={src}
+      FallbackComponent={() => <img src="/img/error-pokemon.png" {...props} />}
+    >
+      <Suspense fallback={<img src="/img/fallback-ship.png" {...props} />}>
+        <Img src={src} {...props} />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
+function Img({ src, ...props }: { src: string } & React.ComponentProps<"img">) {
+  const imageSuspense = use(getImage(src));
+  return <img src={imageSuspense} {...props} />;
+}
+function PokemonDetails({
+  pokemonName,
+  optimisticPokemon,
+}: {
+  pokemonName: string;
+  optimisticPokemon: Pokemon | null;
+}) {
+  const delay =
+    pokemonName === "pikachu" ? 2000 : pokemonName === "bulbasaur" ? 4000 : 10;
+  const pokemon = optimisticPokemon ?? use(getPokemon(pokemonName, delay));
+
+  return (
+    <div className="text-center space-y-4 min-h-100">
+      <div className="flex justify-center">
+        <PokemonImg
+          src={pokemon.image}
+          alt={pokemon.name}
+          className="w-64 h-64"
+        />
+      </div>
+      <section>
+        <h2 className="text-2xl font-bold capitalize">
+          {pokemon.name}
+          <sup className="ml-1 text-sm text-gray-500">#{pokemon.id}</sup>
+        </h2>
+      </section>
+      <section>
+        {pokemon.abilities.length ? (
+          <ul className="space-y-1">
+            <li className="font-medium text-gray-700">Abilities:</li>
+            {pokemon.abilities.map((t) => (
+              <li key={t.ability.name} className="text-sm">
+                <span className="capitalize text-gray-900">
+                  {t.ability.name}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+    </div>
+  );
 }
 
 function FastLoadPokemon({
@@ -154,77 +338,6 @@ function FastLoadPokemon({
   );
 }
 
-function PokemonSelector({
-  pokemonName,
-  onChange,
-}: {
-  pokemonName: string;
-  onChange: (name: string) => void;
-}) {
-  const pokemonsList = ["ditto", "pikachu", "charmander", "bulbasaur"];
-  return (
-    <div className="mb-6">
-      <label
-        htmlFor="pokemon-select"
-        className="block text-sm font-medium text-gray-700"
-      >
-        Select Pokémon:
-      </label>
-      {pokemonsList.map((name) => (
-        <button
-          key={name}
-          onClick={() => onChange(name)}
-          className={`mt-2 mx-2  items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-            name === pokemonName ? "text-red-500" : ""
-          }`}
-        >
-          {name}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function PokemonDetails({
-  pokemonName,
-  optimisticPokemon,
-}: {
-  pokemonName: string;
-  optimisticPokemon: Pokemon | null;
-}) {
-  const delay =
-    pokemonName === "pikachu" ? 2000 : pokemonName === "bulbasaur" ? 4000 : 10;
-  const pokemon = optimisticPokemon ?? use(getPokemon(pokemonName, delay));
-  console.log("Rendering PokemonDetails for:", optimisticPokemon?.image);
-  return (
-    <div className="text-center space-y-4 min-h-100">
-      <div className="flex justify-center">
-        <img src={pokemon.image} alt={pokemon.name} className="w-64 h-64" />
-      </div>
-      <section>
-        <h2 className="text-2xl font-bold capitalize">
-          {pokemon.name}
-          <sup className="ml-1 text-sm text-gray-500">#{pokemon.id}</sup>
-        </h2>
-      </section>
-      <section>
-        {pokemon.abilities.length ? (
-          <ul className="space-y-1">
-            <li className="font-medium text-gray-700">Abilities:</li>
-            {pokemon.abilities.map((t) => (
-              <li key={t.ability.name} className="text-sm">
-                <span className="capitalize text-gray-900">
-                  {t.ability.name}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </section>
-    </div>
-  );
-}
-
 function PokemonFallback({ pokemonName }: { pokemonName: string }) {
   return (
     <div className="text-center space-y-4 animate-pulse min-h-100">
@@ -254,4 +367,15 @@ function PokemonFallback({ pokemonName }: { pokemonName: string }) {
   );
 }
 
+function ErrorFallback({ error }: { error: Error }) {
+  return (
+    <div className="text-center space-y-4">
+      <h2 className="text-2xl font-semibold text-red-600">Error</h2>
+      <p className="text-sm text-gray-500">{error.message}</p>
+      <p className="text-sm text-gray-500">
+        Please try again later or contact support.
+      </p>
+    </div>
+  );
+}
 export default App;
