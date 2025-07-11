@@ -1,12 +1,8 @@
 import React, { Suspense, use } from "react";
-import {
-  getImageUrlForPokemon,
-  getPokemon,
-  getImage,
-  type Pokemon,
-} from "./utils.tsx";
+import { getPokemon, type Pokemon } from "./utils.tsx";
 import { ErrorBoundary } from "react-error-boundary";
 import { useSpinDelay } from "spin-delay";
+
 function ErrorFallback({ error }: { error: Error }) {
   return (
     <div className="text-center space-y-4">
@@ -18,6 +14,7 @@ function ErrorFallback({ error }: { error: Error }) {
     </div>
   );
 }
+
 const pokemonNameDefault = "ditto";
 function App() {
   const [pokemonName, setPokemonName] = React.useState(pokemonNameDefault);
@@ -40,7 +37,7 @@ function App() {
           pokemonName={pokemonName}
           onChange={handlePokemonChange}
         />
-        <div className="bg-white shadow-xl rounded-2xl max-w-md w-full">
+        <div className="bg-white shadow-xl rounded-2xl max-w-sm w-full">
           <div
             className={`px-6 py-12`}
             style={{ opacity: delayedPending ? 0.6 : 1 }}
@@ -57,7 +54,7 @@ function App() {
             </ErrorBoundary>
           </div>
         </div>
-        <LoadPokemon
+        <FastLoadPokemon
           setPokemonName={setPokemonName}
           setOptimisticPokemon={setOptimisticPokemon}
         />
@@ -66,40 +63,48 @@ function App() {
   );
 }
 
-function LoadPokemon({
+async function createOptimisticPokemon(formData: FormData) {
+  return {
+    name: formData.get("name") as string, // This will be rendered by your <PokemonDetails />
+    id: 0, // Placeholder ID
+    image: await fileToDataUrl(formData.get("image") as File), // This will be rendered by your <Img />
+    abilities: [],
+  };
+}
+
+function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function FastLoadPokemon({
   setPokemonName,
   setOptimisticPokemon,
 }: {
   setPokemonName: (name: string) => void;
   setOptimisticPokemon: (pokemon: Pokemon | null) => void;
 }) {
-  function handlePokemonClick(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const [pokemonSelect, setPokemonSelect] = React.useState(pokemonNameDefault);
+  async function handlePokemonClick(formData: FormData) {
+    setOptimisticPokemon(await createOptimisticPokemon(formData));
 
-    const formData = new FormData(e.currentTarget);
+    await sleep(3000); // Simulate a delay for optimistic UI
     const name = formData.get("name") as string;
-    const imageUrl = "/img/pokemon/" + name + ".jpg";
-
-    setOptimisticPokemon({
-      name,
-      id: 0, // Placeholder ID
-      image: imageUrl, // This will be rendered by your <Img />
-      abilities: [],
-    });
-
     setPokemonName(name);
   }
 
-  const [pokemonSelect, setPokemonSelect] = React.useState(pokemonNameDefault);
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Fast Load</h2>
+    <div className="">
       <div className="grid grid-cols-2">
-        <form
-          method="post"
-          className="col-span-4 mb-4"
-          onSubmit={handlePokemonClick}
-        >
+        <form className="col-span-4 mb-4" action={handlePokemonClick}>
           <div>
             <label htmlFor="name">Name</label>
             <select
@@ -127,10 +132,13 @@ function LoadPokemon({
             >
               Image
             </label>
-            <img
-              src={"/img/pokemon/" + pokemonSelect + ".jpg"}
-              alt="Select Pokémon"
-              className="p-4 mt-2 w-64 bg-white h-64 object-contain border border-gray-300 rounded-md"
+            <input
+              type="file"
+              id="image"
+              name="image"
+              accept="image/*"
+              className="mt-2 block w-full focus:outline-none focus:ring-2 focus:ring-blue-500 file:focus:ring-blue-500 file:text-sm file:font-medium file:bg-blue-600 file:text-white file:hover:bg-blue-700 file:cursor-pointer file:border-0 file:rounded-md file:px-4 file:py-2 file:mr-4"
+              required
             />
           </div>
 
@@ -191,20 +199,7 @@ function PokemonDetails({
   return (
     <div className="text-center space-y-4 min-h-100">
       <div className="flex justify-center">
-        <ErrorBoundary
-          FallbackComponent={() => (
-            <img src="/img/fallback-ship.png" alt="Loading..." />
-          )}
-        >
-          <Suspense
-            fallback={<img src="/img/fallback-ship.png" alt={pokemon.name} />}
-          >
-            <Img
-              src={pokemon.image ?? getImageUrlForPokemon(pokemon.name)}
-              alt={pokemon.name}
-            />
-          </Suspense>
-        </ErrorBoundary>
+        <img src={pokemon.image} alt={pokemon.name} className="w-64 h-64" />
       </div>
       <section>
         <h2 className="text-2xl font-bold capitalize">
@@ -228,11 +223,6 @@ function PokemonDetails({
       </section>
     </div>
   );
-}
-
-function Img({ src, alt }: { src: string; alt: string }) {
-  const image = use(getImage(src));
-  return <img src={image} alt={alt} className="w-64 h-64 object-contain" />;
 }
 
 function PokemonFallback({ pokemonName }: { pokemonName: string }) {

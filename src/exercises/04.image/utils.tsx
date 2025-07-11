@@ -1,7 +1,7 @@
 export type Pokemon = {
   name: string;
   id: number;
-  image?: string; // Optional image URL for the Pokémon
+  image: string; // Optional image URL for the Pokémon
   abilities: Array<{
     slot: number;
     ability: {
@@ -33,6 +33,7 @@ export async function fetchPokemon(
   }
 
   const pokemon = await response.json();
+  pokemon.image = getImageUrlForPokemon(pokemon.name);
   return pokemon as Pokemon;
 }
 
