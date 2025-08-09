@@ -3,8 +3,8 @@ import {
   getImage,
   getPokemon,
   searchPokemons,
-  getImageUrlForPokemon,
   type Pokemon,
+  getImageUrlForPokemon,
 } from "./utils.tsx";
 import { ErrorBoundary } from "react-error-boundary";
 import { useSpinDelay } from "spin-delay";
@@ -14,7 +14,7 @@ function App() {
   const [pokemonName, setPokemonName] = React.useState(pokemonNameDefault);
   const [optimisticPokemon, setOptimisticPokemon] =
     React.useOptimistic<Pokemon | null>(null);
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = useTransition();
   const delayedPending = useSpinDelay(isPending, {
     delay: 300,
     minDuration: 500,
@@ -27,16 +27,10 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-start justify-center p-4">
       <div className="flex flex-col items-center space-y-6">
-        <PokemonSelector
-          pokemonName={pokemonName}
-          onChange={handlePokemonChange}
-        />
         <div className="flex flex-row shadow-xl rounded-2xl max-w-full w-full">
-          <div className="px-6 py-4 bg-gray-50 rounded-l-2xl">
+          <div className="px-6 py-4 bg-gray-50 rounded-l-2xl max-w-xs">
             <PokemonSearch
-              onSelection={(selection) => {
-                startTransition(() => setPokemonName(selection));
-              }}
+              onSelection={handlePokemonChange}
             />
           </div>
           <div
@@ -70,11 +64,9 @@ function PokemonSearch({
   onSelection: (selection: string) => void;
 }) {
   const [searchText, setSearchText] = React.useState<string>("");
-  const [isTransitionPending, startTransition] = useTransition();
-  const isPending = useSpinDelay(isTransitionPending, {
-    delay: 300,
-    minDuration: 350,
-  });
+  const deferredSearchText = React.useDeferredValue(searchText);
+  const isPending = useSpinDelay(searchText !== deferredSearchText)
+
   return (
     <div className="mb-6">
       <div>
@@ -83,7 +75,7 @@ function PokemonSearch({
           type="text"
           placeholder="Search Pokémon"
           value={searchText}
-          onChange={(e) => startTransition(() => setSearchText(e.target.value))}
+          onChange={(e) => setSearchText(e.target.value)}
           className="mt-2 block w-full px-3 py-2 border bg-white border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -93,7 +85,7 @@ function PokemonSearch({
           style={{ opacity: isPending ? 0.6 : 1 }}
         >
           <Suspense fallback={<SearchResultsFallback />}>
-            <SearchResults pokemonName={searchText} onSelection={onSelection} />
+            <SearchResults searchText={deferredSearchText} onSelection={onSelection} />
           </Suspense>
         </ul>
       </ErrorBoundary>
@@ -119,13 +111,13 @@ function SearchResultsFallback() {
 }
 
 function SearchResults({
-  pokemonName,
+  searchText,
   onSelection,
 }: {
-  pokemonName: string;
+  searchText: string;
   onSelection: (selection: string) => void;
 }) {
-  const searchResults = use(searchPokemons(pokemonName, 500));
+  const searchResults = use(searchPokemons(searchText, 500));
   return (
     <>
       {searchResults.map((pokemon) => (
@@ -137,7 +129,7 @@ function SearchResults({
           <div>
             <div className="flex items-center space-x-2 px-2">
               <img
-                src={getImageUrlForPokemon(pokemon.name)}
+                src={pokemon.image}
                 alt={pokemon.name}
                 className="w-12 h-12 p-2 object-contain bg-white rounded-full shadow-sm"
               />
@@ -174,37 +166,6 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function PokemonSelector({
-  pokemonName,
-  onChange,
-}: {
-  pokemonName: string;
-  onChange: (name: string) => void;
-}) {
-  const pokemonsList = ["ditto", "pikachu", "charmander", "bulbasaur"];
-  return (
-    <div className="mb-6">
-      <label
-        htmlFor="pokemon-select"
-        className="block text-sm font-medium text-gray-700"
-      >
-        Select Pokémon:
-      </label>
-      {pokemonsList.map((name) => (
-        <button
-          key={name}
-          onClick={() => onChange(name)}
-          className={`mt-2 mx-2  items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-            name === pokemonName ? "text-red-500" : ""
-          }`}
-        >
-          {name}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 function PokemonImg({
   src,
   ...props
@@ -232,6 +193,9 @@ function PokemonDetails({
   pokemonName: string;
   optimisticPokemon: Pokemon | null;
 }) {
+  const pokemonImgUrl = getImageUrlForPokemon(pokemonName);
+
+  void getImage(pokemonImgUrl)
   const delay =
     pokemonName === "pikachu" ? 2000 : pokemonName === "bulbasaur" ? 4000 : 10;
   const pokemon = optimisticPokemon ?? use(getPokemon(pokemonName, delay));
@@ -240,7 +204,7 @@ function PokemonDetails({
     <div className="text-center space-y-4 min-h-100">
       <div className="flex justify-center">
         <PokemonImg
-          src={pokemon.image}
+          src={pokemonImgUrl}
           alt={pokemon.name}
           className="w-64 h-64"
         />
