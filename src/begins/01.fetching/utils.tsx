@@ -13,6 +13,7 @@ export type Pokemon = {
 
 export type PokemonSearch = Array<Pokemon>;
 
+// https://pokeapi.co/api/v2/pokemon/
 export function getPokemon(name: string): Pokemon {
   const pokemon: Pokemon = {
     name,
@@ -35,6 +36,7 @@ export function getImageUrlForPokemon(pokemonName: string, now?: number): string
   return `https://img.pokemondb.net/artwork/large/${sanitized}.jpg?ts=${time}`;
 }
 
+// https://pokeapi.co/api/v2/pokemon?limit=1000
 export function filterPokemons(query: string): PokemonSearch {
   const pokemons: PokemonSearch = [
     { name: "bulbasaur", id: 1, image: getImageUrlForPokemon("bulbasaur"), abilities: [] },
