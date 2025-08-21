@@ -20,7 +20,6 @@ function App() {
     });
   }
 
-  console.log("App rendered with pokemonName:", pokemonName);
   return (
     <div className="min-h-screen bg-gray-100 flex items-start justify-center p-4">
       <div className="flex flex-col items-center space-y-6">
