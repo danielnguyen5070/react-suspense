@@ -20,7 +20,7 @@ function FastLoadPokemon({ setOptimisticPokemon, setPokemonName }: { setOptimist
 
     return (
         <div className="">
-            <div className="grid grid-cols-2">
+            <div className="grid grid-cols-2 min-w-xs">
                 <form className="col-span-4 mb-4"
                     onSubmit={handleLoadPokemon}>
                     <div>
@@ -42,22 +42,6 @@ function FastLoadPokemon({ setOptimisticPokemon, setPokemonName }: { setOptimist
                             <option value="psyduck">Psyduck</option>
                             <option value="lapras">Lapras</option>
                         </select>
-                    </div>
-                    <div className="mt-4">
-                        <label
-                            htmlFor="image"
-                            className="block text-sm font-medium text-gray-700"
-                        >
-                            Image
-                        </label>
-                        <input
-                            type="file"
-                            id="image"
-                            name="image"
-                            accept="image/*"
-                            className="mt-2 block w-full focus:outline-none focus:ring-2 focus:ring-blue-500 file:focus:ring-blue-500 file:text-sm file:font-medium file:bg-blue-600 file:text-white file:hover:bg-blue-700 file:cursor-pointer file:border-0 file:rounded-md file:px-4 file:py-2 file:mr-4"
-                            required
-                        />
                     </div>
 
                     <button
