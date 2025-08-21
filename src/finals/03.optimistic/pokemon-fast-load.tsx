@@ -1,12 +1,14 @@
 
-import { useState } from "react";
+import { useOptimistic, useState } from "react";
 import { pokemonNameDefault, type Pokemon } from "./utils.tsx";
+import { useFormStatus } from "react-dom";
 
 function FastLoadPokemon({ setOptimisticPokemon, setPokemonName }: { setOptimisticPokemon: (pokemon: Pokemon) => void, setPokemonName: (name: string) => void }) {
     const [pokemonSelect, setPokemonSelect] = useState(pokemonNameDefault);
-
-    function handleLoadPokemon(e: React.FormEvent<HTMLFormElement>) {
+    const [message, setMessage] = useOptimistic<string>("Load");
+    async function handleLoadPokemon(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
+        setMessage("Loading Pokémon...");
         const pokemonName = pokemonSelect.toLowerCase();
         const pokemon: Pokemon = {
             name: pokemonName,
@@ -16,6 +18,14 @@ function FastLoadPokemon({ setOptimisticPokemon, setPokemonName }: { setOptimist
         };
         setOptimisticPokemon(pokemon);
         setPokemonName(pokemonName);
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulating network delay
+        setMessage("Pokémon loaded successfully!");
+
+        await new Promise((resolve) => setTimeout(resolve, 3000)); // Simulating network delay
+        setMessage("Load Other Pokémon");
+
+        await new Promise((resolve) => setTimeout(resolve, 5000)); // Simulating network delay
+        setMessage("Load");
     }
 
     return (
@@ -44,15 +54,24 @@ function FastLoadPokemon({ setOptimisticPokemon, setPokemonName }: { setOptimist
                         </select>
                     </div>
 
-                    <button
-                        type="submit"
-                        className="mt-4 w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                        Load
-                    </button>
+                    <CreateButton message={message} />
                 </form>
             </div>
         </div>
     );
+}
+
+
+function CreateButton({ message }: { message: string }) {
+    const { pending } = useFormStatus()
+    return (
+        <button
+            type="submit"
+            className="mt-4 w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            style={{ opacity: pending ? 0.6 : 1 }}
+        >
+            {message}
+        </button>
+    )
 }
 export default FastLoadPokemon;
