@@ -1,3 +1,4 @@
+export const pokemonNameDefault = "squirtle";
 export type Pokemon = {
   name: string;
   id: number;
@@ -13,18 +14,19 @@ export type Pokemon = {
 
 export type PokemonSearch = Array<Pokemon>;
 
-export function getPokemon(name: string): Pokemon {
-  const pokemon: Pokemon = {
-    name,
-    id: Math.floor(Math.random() * 1000),
-    image: getImageUrlForPokemon(name),
-    abilities: [
-      { slot: 1, ability: { name: "overgrow", url: "" } },
-      { slot: 2, ability: { name: "chlorophyll", url: "" } },
-    ],
-  };
-
-  return pokemon;
+// https://pokeapi.co/api/v2/pokemon/
+export async function getPokemon(name: string, delay?: number): Promise<Pokemon> {
+  const param = new URLSearchParams({ q: name });
+  if (delay) {
+    param.set("delay", delay.toString());
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Pokémon: ${response.statusText}`);
+  }
+  const data: Pokemon = await response.json();
+  return data;
 }
 
 const nowAPI = Date.now();
@@ -35,6 +37,7 @@ export function getImageUrlForPokemon(pokemonName: string, now?: number): string
   return `https://img.pokemondb.net/artwork/large/${sanitized}.jpg?ts=${time}`;
 }
 
+// https://pokeapi.co/api/v2/pokemon?limit=1000
 export function filterPokemons(query: string): PokemonSearch {
   const pokemons: PokemonSearch = [
     { name: "bulbasaur", id: 1, image: getImageUrlForPokemon("bulbasaur"), abilities: [] },
@@ -49,4 +52,3 @@ export function filterPokemons(query: string): PokemonSearch {
   return pokemons.filter(pokemon => pokemon.name.includes(query.toLowerCase()));
 }
 
-export const pokemonNameDefault = "squirtle";

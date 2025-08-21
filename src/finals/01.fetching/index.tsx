@@ -1,8 +1,9 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { pokemonNameDefault } from "./utils.tsx";
 import PokemonSearch from "./pokemon-search.tsx";
 import PokemonDetails from "./pokemon-detail.tsx";
 import FastLoadPokemon from "./pokemon-fast-load.tsx";
+import { ErrorBoundary } from "react-error-boundary";
 
 function App() {
   const [pokemonName, setPokemonName] = React.useState(pokemonNameDefault);
@@ -23,9 +24,13 @@ function App() {
           <div
             className={`px-6 py-12 bg-white`}
           >
-            <PokemonDetails
-              pokemonName={pokemonName}
-            />
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Suspense fallback={<PokemonFallback pokemonName={pokemonName} />}>
+                <PokemonDetails
+                  pokemonName={pokemonName}
+                />
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </div>
         <FastLoadPokemon />
@@ -34,34 +39,42 @@ function App() {
   );
 }
 
+function ErrorFallback({ error }: { error: Error }) {
+  return (
+    <div className="text-center space-y-4">
+      <h2 className="text-2xl font-bold text-red-600">Error</h2>
+      <p className="text-red-500">{error.message}</p>
+    </div>
+  );
+}
 
-// function PokemonFallback({ pokemonName }: { pokemonName: string }) {
-//   return (
-//     <div className="text-center space-y-4 animate-pulse min-h-100">
-//       <div className="flex justify-center">
-//         <img
-//           src="/img/fallback-pokemon.png"
-//           alt={pokemonName}
-//           className="w-64 h-64 object-contain"
-//         />
-//       </div>
-//       <section>
-//         <h2 className="text-2xl font-semibold text-gray-800">
-//           {pokemonName}
-//           <sup className="ml-1 text-sm text-gray-700">XX</sup>
-//         </h2>
-//       </section>
-//       <section>
-//         <ul className="space-y-1">
-//           {Array.from({ length: 2 }).map((_, i) => (
-//             <li key={i} className="text-sm text-gray-800">
-//               <span className="font-medium">Loading</span>: <span>...</span>
-//             </li>
-//           ))}
-//         </ul>
-//       </section>
-//     </div>
-//   );
-// }
+function PokemonFallback({ pokemonName }: { pokemonName: string }) {
+  return (
+    <div className="text-center space-y-4 animate-pulse min-h-100">
+      <div className="flex justify-center">
+        <img
+          src="/img/fallback-pokemon.png"
+          alt={pokemonName}
+          className="w-64 h-64 object-contain"
+        />
+      </div>
+      <section>
+        <h2 className="text-2xl font-semibold text-gray-800">
+          {pokemonName}
+          <sup className="ml-1 text-sm text-gray-700">XX</sup>
+        </h2>
+      </section>
+      <section>
+        <ul className="space-y-1">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <li key={i} className="text-sm text-gray-800">
+              <span className="font-medium">Loading</span>: <span>...</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
 
 export default App;

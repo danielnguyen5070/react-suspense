@@ -1,3 +1,4 @@
+export const pokemonNameDefault = "squirtle";
 export type Pokemon = {
   name: string;
   id: number;
@@ -51,4 +52,3 @@ export function filterPokemons(query: string): PokemonSearch {
   return pokemons.filter(pokemon => pokemon.name.includes(query.toLowerCase()));
 }
 
-export const pokemonNameDefault = "squirtle";
