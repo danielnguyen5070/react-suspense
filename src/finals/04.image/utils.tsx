@@ -33,7 +33,6 @@ async function getPokemonImpl(name: string, delay?: number): Promise<Pokemon> {
     throw new Error(`Failed to fetch Pokémon: ${response.statusText}`);
   }
   const data: Pokemon = await response.json();
-  data.image = getImageUrlForPokemon(data.name); // Ensure image URL is set
   return data;
 }
 
@@ -48,15 +47,32 @@ export function getImageUrlForPokemon(pokemonName: string, now?: number): string
 // https://pokeapi.co/api/v2/pokemon?limit=1000
 export function filterPokemons(query: string): PokemonSearch {
   const pokemons: PokemonSearch = [
-    { name: "bulbasaur", id: 1, image: getImageUrlForPokemon("bulbasaur"), abilities: [] },
-    { name: "ivysaur", id: 2, image: getImageUrlForPokemon("ivysaur"), abilities: [] },
-    { name: "venusaur", id: 3, image: getImageUrlForPokemon("venusaur"), abilities: [] },
-    { name: "charmander", id: 4, image: getImageUrlForPokemon("charmander"), abilities: [] },
-    { name: "charmeleon", id: 5, image: getImageUrlForPokemon("charmeleon"), abilities: [] },
-    { name: "charizard", id: 6, image: getImageUrlForPokemon("charizard"), abilities: [] },
+    { name: "bulbasaur", id: 1, image: "/img/pokemon/bulbasaur.jpg", abilities: [] },
+    { name: "ivysaur", id: 2, image: "/img/pokemon/ivysaur.jpg", abilities: [] },
+    { name: "venusaur", id: 3, image: "/img/pokemon/venusaur.jpg", abilities: [] },
+    { name: "charmander", id: 4, image: "/img/pokemon/charmander.jpg", abilities: [] },
+    { name: "charmeleon", id: 5, image: "/img/pokemon/charmeleon.jpg", abilities: [] },
+    { name: "charizard", id: 6, image: "/img/pokemon/charizard.jpg", abilities: [] },
+    { name: "charizard", id: 7, image: "/img/pokemon/karate.jpg", abilities: [] },
+    { name: "charizard", id: 8, image: "/img/pokemon/ninjutsu.jpg", abilities: [] },
     // Add more Pokémon as needed
   ];
 
   return pokemons.filter(pokemon => pokemon.name.includes(query.toLowerCase()));
 }
 
+const imageCache = new Map<string, Promise<string>>();
+export function getImage(src: string): Promise<string> {
+  const imagePromise = imageCache.get(src) ?? preloadImage(src);
+  imageCache.set(src, imagePromise);
+  return imagePromise;
+}
+
+function preloadImage(src: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => resolve(src)
+    img.onerror = reject
+  });
+}

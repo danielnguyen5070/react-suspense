@@ -1,23 +1,19 @@
 
-import { getPokemon, type Pokemon } from "./utils.tsx";
+import { getPokemon, getImageUrlForPokemon, getImage } from "./utils.tsx";
 import { use } from "react";
 
 function PokemonDetails({
     pokemonName,
-    optimisticPokemon
 }: {
     pokemonName: string;
-    optimisticPokemon: Pokemon | null;
 }) {
-    const pokemon = optimisticPokemon ?? use(getPokemon(pokemonName, 2000));
-    console.log("PokemonDetails", pokemonName, optimisticPokemon);
+    const pokemon = use(getPokemon(pokemonName));
     return (
         <div className="text-center space-y-4 min-h-100">
             <div className="flex justify-center">
-                <img
-                    src={pokemon.image}
+                <Img
+                    src={getImageUrlForPokemon(pokemon.name)}
                     alt={pokemon.name}
-                    className="w-64 h-64"
                 />
             </div>
             <section>
@@ -42,6 +38,12 @@ function PokemonDetails({
             </section>
         </div>
     );
+}
+
+
+function Img({ src = '', ...props }: React.ComponentProps<'img'>) {
+    const loadedSrc = use(getImage(src)); // resolves after preloading
+    return <img src={loadedSrc} className="w-64 h-64 object-contain" {...props} />;
 }
 
 export default PokemonDetails

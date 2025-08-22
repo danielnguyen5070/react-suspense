@@ -1,14 +1,12 @@
 import React, { Suspense } from "react";
-import { pokemonNameDefault, type Pokemon } from "./utils.tsx";
+import { pokemonNameDefault } from "./utils.tsx";
 import PokemonSearch from "./pokemon-search.tsx";
 import PokemonDetails from "./pokemon-detail.tsx";
-import FastLoadPokemon from "./pokemon-fast-load.tsx";
 import { ErrorBoundary } from "react-error-boundary";
 import { useSpinDelay } from "spin-delay";
 
 function App() {
   const [pokemonName, setPokemonName] = React.useState(pokemonNameDefault);
-  const [optimisticPokemon, setOptimisticPokemon] = React.useOptimistic<Pokemon | null>(null)
   const [isPending, startTransition] = React.useTransition();
   const showSpinner = useSpinDelay(isPending, {
     delay: 300,
@@ -38,14 +36,11 @@ function App() {
               <Suspense fallback={<PokemonFallback pokemonName={pokemonName} />}>
                 <PokemonDetails
                   pokemonName={pokemonName}
-                  optimisticPokemon={optimisticPokemon}
                 />
               </Suspense>
             </ErrorBoundary>
           </div>
         </div>
-        <FastLoadPokemon setOptimisticPokemon={setOptimisticPokemon}
-          setPokemonName={setPokemonName} />
       </div>
     </div>
   );
