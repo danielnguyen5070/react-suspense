@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar';
 import Fetching from './begins/01.fetching'
 import Dynamic from './begins/02.dynamic'
 import Optimistic from './begins/03.optimistic'
-import Image from './finals/04.image'
+import Image from './begins/04.image'
 import Responsive from './finals/05.responsive'
 import Optimization from './finals/06.optimization'
 

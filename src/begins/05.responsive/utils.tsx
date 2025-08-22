@@ -44,21 +44,31 @@ export function getImageUrlForPokemon(pokemonName: string, now?: number): string
   return `https://img.pokemondb.net/artwork/large/${sanitized}.jpg?ts=${time}`;
 }
 
-// https://pokeapi.co/api/v2/pokemon?limit=1000
-export function filterPokemons(query: string): PokemonSearch {
-  const pokemons: PokemonSearch = [
-    { name: "bulbasaur", id: 1, image: "/img/pokemon/bulbasaur.jpg", abilities: [] },
-    { name: "charmander", id: 2, image: "/img/pokemon/charmander.jpg", abilities: [] },
-    { name: "ditto", id: 3, image: "/img/pokemon/ditto.jpg", abilities: [] },
-    { name: "eevee", id: 4, image: "/img/pokemon/eevee.jpg", abilities: [] },
-    { name: "gengar", id: 5, image: "/img/pokemon/gengar.jpg", abilities: [] },
-    { name: "jigglypuff", id: 6, image: "/img/pokemon/jigglypuff.jpg", abilities: [] },
-    { name: "lapras", id: 7, image: "/img/pokemon/lapras.jpg", abilities: [] },
-    { name: "pikachu", id: 8, image: "/img/pokemon/pikachu.jpg", abilities: [] },
-    // Add more Pokémon as needed
-  ];
+const filterCache = new Map<string, Promise<PokemonSearch>>();
+export function filterPokemons(query: string, delay?: number): Promise<PokemonSearch> {
+  const filterPromise = filterCache.get(query) ?? filterPokemonsImpl(query, delay);
+  filterCache.set(query, filterPromise);
+  return filterPromise;
+}
 
-  return pokemons.filter(pokemon => pokemon.name.includes(query.toLowerCase()));
+// https://pokeapi.co/api/v2/pokemon?limit=1000
+async function filterPokemonsImpl(query: string, delay?: number): Promise<PokemonSearch> {
+  const param = new URLSearchParams({ q: query });
+  if (delay) {
+    param.set("delay", delay.toString());
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=50&${param.toString()}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Pokémon: ${response.statusText}`);
+  }
+  const data = await response.json();
+
+  return (data.results as PokemonSearch).filter(pokemon => {
+    pokemon.image = `/img/pokemon/${pokemon.name}.jpg`;
+    return pokemon.name.includes(query.toLowerCase());
+  });
+
 }
 
 const imageCache = new Map<string, Promise<string>>();

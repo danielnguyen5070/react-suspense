@@ -1,5 +1,7 @@
-import React from "react";
+import React, { Suspense, use } from "react";
 import { filterPokemons } from "./utils.tsx";
+import { ErrorBoundary } from "react-error-boundary";
+import { useSpinDelay } from "spin-delay";
 
 function PokemonSearch({
     onSelection,
@@ -7,6 +9,11 @@ function PokemonSearch({
     onSelection: (selection: string) => void;
 }) {
     const [searchText, setSearchText] = React.useState<string>("");
+    const [isPending, startTransition] = React.useTransition();
+    const showSpinner = useSpinDelay(isPending, {
+        delay: 300,
+        minDuration: 500,
+    });
 
     return (
         <div className="mb-6">
@@ -16,19 +23,36 @@ function PokemonSearch({
                     type="text"
                     placeholder="Search Pokémon"
                     value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
+                    onChange={(e) => startTransition(() => setSearchText(e.target.value))}
                     className="mt-2 block w-full px-3 py-2 border bg-white border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
             </div>
             <ul
                 className="mt-2 space-y-1 max-h-120 overflow-auto"
+                style={{ opacity: showSpinner ? 0.6 : 1 }}
             >
-                <SearchResults searchText={searchText} onSelection={onSelection} />
+                <ErrorBoundary
+                    FallbackComponent={({ error, resetErrorBoundary }) => (
+                        <div className="text-red-500">
+                            <p>Error loading Pokémon search results:</p>
+                            <pre>{error.message}</pre>
+                            <button
+                                onClick={resetErrorBoundary}
+                                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    )}
+                >
+                    <Suspense fallback={<div>Loading...</div>}>
+                        <SearchResults searchText={searchText} onSelection={onSelection} />
+                    </Suspense>
+                </ErrorBoundary>
             </ul>
         </div>
     );
 }
-
 
 function SearchResults({
     searchText,
@@ -37,7 +61,7 @@ function SearchResults({
     searchText: string;
     onSelection: (selection: string) => void;
 }) {
-    const searchResults = filterPokemons(searchText);
+    const searchResults = use(filterPokemons(searchText));
     return (
         <>
             {searchResults.map((pokemon) => (
