@@ -48,13 +48,13 @@ export function getImageUrlForPokemon(pokemonName: string, now?: number): string
 export function filterPokemons(query: string): PokemonSearch {
   const pokemons: PokemonSearch = [
     { name: "bulbasaur", id: 1, image: "/img/pokemon/bulbasaur.jpg", abilities: [] },
-    { name: "ivysaur", id: 2, image: "/img/pokemon/ivysaur.jpg", abilities: [] },
-    { name: "venusaur", id: 3, image: "/img/pokemon/venusaur.jpg", abilities: [] },
-    { name: "charmander", id: 4, image: "/img/pokemon/charmander.jpg", abilities: [] },
-    { name: "charmeleon", id: 5, image: "/img/pokemon/charmeleon.jpg", abilities: [] },
-    { name: "charizard", id: 6, image: "/img/pokemon/charizard.jpg", abilities: [] },
-    { name: "charizard", id: 7, image: "/img/pokemon/karate.jpg", abilities: [] },
-    { name: "charizard", id: 8, image: "/img/pokemon/ninjutsu.jpg", abilities: [] },
+    { name: "charmander", id: 2, image: "/img/pokemon/charmander.jpg", abilities: [] },
+    { name: "ditto", id: 3, image: "/img/pokemon/ditto.jpg", abilities: [] },
+    { name: "eevee", id: 4, image: "/img/pokemon/eevee.jpg", abilities: [] },
+    { name: "gengar", id: 5, image: "/img/pokemon/gengar.jpg", abilities: [] },
+    { name: "jigglypuff", id: 6, image: "/img/pokemon/jigglypuff.jpg", abilities: [] },
+    { name: "lapras", id: 7, image: "/img/pokemon/lapras.jpg", abilities: [] },
+    { name: "pikachu", id: 8, image: "/img/pokemon/pikachu.jpg", abilities: [] },
     // Add more Pokémon as needed
   ];
 

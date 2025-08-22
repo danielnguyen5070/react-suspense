@@ -36,6 +36,7 @@ function App() {
               <Suspense fallback={<PokemonFallback pokemonName={pokemonName} />}>
                 <PokemonDetails
                   pokemonName={pokemonName}
+                  setPokemonName={setPokemonName}
                 />
               </Suspense>
             </ErrorBoundary>
