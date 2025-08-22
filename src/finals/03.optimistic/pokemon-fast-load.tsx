@@ -6,33 +6,32 @@ import { useFormStatus } from "react-dom";
 function FastLoadPokemon({ setOptimisticPokemon, setPokemonName }: { setOptimisticPokemon: (pokemon: Pokemon) => void, setPokemonName: (name: string) => void }) {
     const [pokemonSelect, setPokemonSelect] = useState(pokemonNameDefault);
     const [message, setMessage] = useOptimistic<string>("Load");
-    async function handleLoadPokemon(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault();
+
+    async function handleLoadPokemon(formData: FormData) {
         setMessage("Loading Pokémon...");
-        const pokemonName = pokemonSelect.toLowerCase();
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulating network delay
+        const pokemonName = formData.get("name") as string;
         const pokemon: Pokemon = {
             name: pokemonName,
             id: Math.floor(Math.random() * 1000), // Simulating an ID for the example
             image: `/img/pokemon/${pokemonName}.jpg`,
             abilities: [],
         };
+        setMessage("Adding Pokémon!");
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulating network delay
+
+        setMessage("Adding Other Pokémon!");
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulating network delay
+
         setOptimisticPokemon(pokemon);
         setPokemonName(pokemonName);
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulating network delay
-        setMessage("Pokémon loaded successfully!");
-
-        await new Promise((resolve) => setTimeout(resolve, 3000)); // Simulating network delay
-        setMessage("Load Other Pokémon");
-
-        await new Promise((resolve) => setTimeout(resolve, 5000)); // Simulating network delay
-        setMessage("Load");
     }
 
     return (
         <div className="">
             <div className="grid grid-cols-2 min-w-xs">
                 <form className="col-span-4 mb-4"
-                    onSubmit={handleLoadPokemon}>
+                    action={handleLoadPokemon}>
                     <div>
                         <label htmlFor="name">Name</label>
                         <select
