@@ -7,8 +7,8 @@ function PokemonDetails({
 }: {
     pokemonName: string;
 }) {
-    const pokemon = use(getPokemon(pokemonName, pokemonName === "ivysaur" ? 1000 : undefined));
-    const pokemonImgUrl = getImageUrlForPokemon(pokemon.name)
+    const pokemon = use(getPokemon(pokemonName, pokemonName === "ivysaur" ? 1000 : 0));
+    const pokemonImgUrl = getImageUrlForPokemon(pokemonName);
     return (
         <div className="text-center space-y-4 min-h-100">
             <div className="flex justify-center">
