@@ -2,6 +2,11 @@ import { ErrorBoundary } from "react-error-boundary";
 import { getPokemon, getImageUrlForPokemon, getImage } from "./utils.tsx";
 import { use, Suspense } from "react";
 
+PokemonDetails.load = (pokemonName: string) => {
+    getPokemon(pokemonName)
+    getImage(getImageUrlForPokemon(pokemonName == 'ditto' ? 'xxx' : pokemonName))
+}
+
 function PokemonDetails({
     pokemonName,
     setPokemonName,
@@ -9,7 +14,9 @@ function PokemonDetails({
     pokemonName: string;
     setPokemonName: (name: string) => void;
 }) {
+    PokemonDetails.load(pokemonName)
     const pokemon = use(getPokemon(pokemonName));
+
     return (
         <div className="text-center space-y-4 min-h-100">
             <div className="flex justify-center">

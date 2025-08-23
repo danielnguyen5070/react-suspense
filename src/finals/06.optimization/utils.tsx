@@ -28,7 +28,7 @@ async function getPokemonImpl(name: string, delay?: number): Promise<Pokemon> {
     param.set("delay", delay.toString());
     await new Promise(resolve => setTimeout(resolve, delay));
   }
-  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
+  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}?${param.toString()}`);
   if (!response.ok) {
     throw new Error(`Failed to fetch Pokémon: ${response.statusText}`);
   }
