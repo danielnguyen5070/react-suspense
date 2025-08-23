@@ -7,7 +7,7 @@ import Dynamic from './begins/02.dynamic'
 import Optimistic from './begins/03.optimistic'
 import Image from './begins/04.image'
 import Responsive from './begins/05.responsive'
-import Optimization from './finals/06.optimization'
+import Optimization from './begins/06.optimization'
 
 const routes = [
   { path: "/fetching/throwing-promise", element: <Fetching /> },

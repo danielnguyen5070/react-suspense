@@ -16,17 +16,15 @@ export type PokemonSearch = Array<Pokemon>;
 
 // https://pokeapi.co/api/v2/pokemon/
 export async function getPokemon(name: string, delay?: number): Promise<Pokemon> {
-  const param = new URLSearchParams({ q: name });
   if (delay) {
-    param.set("delay", delay.toString());
-    await new Promise(resolve => setTimeout(resolve, delay));
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
-  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch Pokémon: ${response.statusText}`);
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch data for Pokémon: ${name}`);
   }
-  const data: Pokemon = await response.json();
-  return data;
+  const pokemon: Pokemon = await res.json();
+  return pokemon;
 }
 
 const nowAPI = Date.now();

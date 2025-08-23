@@ -2,16 +2,14 @@
 import { getPokemon, getImageUrlForPokemon, pokemonNameDefault } from "./utils.tsx";
 import { use } from "react";
 
-const pokemonPromise = getPokemon(pokemonNameDefault)
-
+const pokemonPromise = getPokemon(pokemonNameDefault, 1000)
 function PokemonDetails({
     pokemonName,
 }: {
     pokemonName: string;
 }) {
-    console.log("PokemonDetails", pokemonName);
     const pokemon = use(pokemonPromise);
-    const pokemonImgUrl = getImageUrlForPokemon(pokemon.name)
+    const pokemonImgUrl = getImageUrlForPokemon(pokemonName);
     return (
         <div className="text-center space-y-4 min-h-100">
             <div className="flex justify-center">
