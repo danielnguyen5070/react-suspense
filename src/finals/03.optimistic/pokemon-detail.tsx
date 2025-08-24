@@ -1,5 +1,5 @@
 
-import { getPokemon, type Pokemon } from "./utils.tsx";
+import { getPokemon, getImageUrlForPokemon, type Pokemon } from "./utils.tsx";
 import { use } from "react";
 
 function PokemonDetails({
@@ -7,15 +7,16 @@ function PokemonDetails({
     optimisticPokemon
 }: {
     pokemonName: string;
-    optimisticPokemon: Pokemon | null;
+    optimisticPokemon: Pokemon | null
 }) {
-    const pokemon = optimisticPokemon ?? use(getPokemon(pokemonName, 2000));
-    console.log("PokemonDetails", pokemonName, optimisticPokemon);
+    const pokemon = optimisticPokemon ?? use(getPokemon(pokemonName));
+    console.log('Rerender PokemonDetails', optimisticPokemon)
+    const pokemonImgUrl = optimisticPokemon?.image ?? getImageUrlForPokemon(pokemonName);
     return (
         <div className="text-center space-y-4 min-h-100">
             <div className="flex justify-center">
                 <img
-                    src={pokemon.image}
+                    src={pokemonImgUrl}
                     alt={pokemon.name}
                     className="w-64 h-64"
                 />

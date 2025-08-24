@@ -1,14 +1,12 @@
 import React, { Suspense } from "react";
-import { pokemonNameDefault, type Pokemon } from "./utils.tsx";
+import { pokemonNameDefault } from "./utils.tsx";
 import PokemonSearch from "./pokemon-search.tsx";
 import PokemonDetails from "./pokemon-detail.tsx";
-import FastLoadPokemon from "./pokemon-fast-load.tsx";
 import { ErrorBoundary } from "react-error-boundary";
 import { useSpinDelay } from "spin-delay";
 
 function App() {
   const [pokemonName, setPokemonName] = React.useState(pokemonNameDefault);
-  const [optimisticPokemon, setOptimisticPokemon] = React.useOptimistic<Pokemon | null>(null)
   const [isPending, startTransition] = React.useTransition();
   const showSpinner = useSpinDelay(isPending, {
     delay: 300,
@@ -16,9 +14,7 @@ function App() {
   });
 
   function handlePokemonChange(name: string) {
-    startTransition(() => {
-      setPokemonName(name);
-    });
+    startTransition(() => setPokemonName(name));
   }
 
   return (
@@ -34,28 +30,16 @@ function App() {
             style={{ opacity: showSpinner ? 0.6 : 1 }}
             className={`px-6 py-12 bg-white`}
           >
-            <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <ErrorBoundary FallbackComponent={PokemonErrorFallback}>
               <Suspense fallback={<PokemonFallback pokemonName={pokemonName} />}>
                 <PokemonDetails
                   pokemonName={pokemonName}
-                  optimisticPokemon={optimisticPokemon}
                 />
               </Suspense>
             </ErrorBoundary>
           </div>
         </div>
-        <FastLoadPokemon setOptimisticPokemon={setOptimisticPokemon}
-          setPokemonName={setPokemonName} />
       </div>
-    </div>
-  );
-}
-
-function ErrorFallback({ error }: { error: Error }) {
-  return (
-    <div className="text-center space-y-4">
-      <h2 className="text-2xl font-bold text-red-600">Error</h2>
-      <p className="text-red-500">{error.message}</p>
     </div>
   );
 }
@@ -83,6 +67,25 @@ function PokemonFallback({ pokemonName }: { pokemonName: string }) {
               <span className="font-medium">Loading</span>: <span>...</span>
             </li>
           ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+function PokemonErrorFallback({ error }: { error: Error }) {
+  return (
+    <div className="text-center space-y-4 animate-pulse min-h-100">
+      <div className="flex justify-center">
+        <img
+          src="/img/error-pokemon.png"
+          alt="Error"
+          className="w-64 h-64 object-contain"
+        />
+      </div>
+      <section>
+        <ul className="space-y-1">
+          {error.message}
         </ul>
       </section>
     </div>

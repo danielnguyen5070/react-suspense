@@ -20,24 +20,21 @@ export function getPokemon(name: string, delay?: number): Promise<Pokemon> {
   pokemonCache.set(name, pokemonPromise);
   return pokemonPromise;
 }
+const nowAPI = Date.now();
 
 // https://pokeapi.co/api/v2/pokemon/
 async function getPokemonImpl(name: string, delay?: number): Promise<Pokemon> {
-  const param = new URLSearchParams({ q: name });
   if (delay) {
-    param.set("delay", delay.toString());
-    await new Promise(resolve => setTimeout(resolve, delay));
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
-  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch Pokémon: ${response.statusText}`);
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}?ts=${nowAPI}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch data for Pokémon: ${name}`);
   }
-  const data: Pokemon = await response.json();
-  data.image = getImageUrlForPokemon(data.name); // Ensure image URL is set
-  return data;
+  const pokemon: Pokemon = await res.json();
+  return pokemon;
 }
 
-const nowAPI = Date.now();
 export function getImageUrlForPokemon(pokemonName: string, now?: number): string {
   // Replace this with a third-party sprite service or fallback to the default one
   const time = now ?? nowAPI
@@ -48,12 +45,14 @@ export function getImageUrlForPokemon(pokemonName: string, now?: number): string
 // https://pokeapi.co/api/v2/pokemon?limit=1000
 export function filterPokemons(query: string): PokemonSearch {
   const pokemons: PokemonSearch = [
-    { name: "bulbasaur", id: 1, image: getImageUrlForPokemon("bulbasaur"), abilities: [] },
-    { name: "ivysaur", id: 2, image: getImageUrlForPokemon("ivysaur"), abilities: [] },
-    { name: "venusaur", id: 3, image: getImageUrlForPokemon("venusaur"), abilities: [] },
-    { name: "charmander", id: 4, image: getImageUrlForPokemon("charmander"), abilities: [] },
-    { name: "charmeleon", id: 5, image: getImageUrlForPokemon("charmeleon"), abilities: [] },
-    { name: "charizard", id: 6, image: getImageUrlForPokemon("charizard"), abilities: [] },
+    { name: "bulbasaur", id: 1, image: "/img/pokemon/bulbasaur.jpg", abilities: [] },
+    { name: "charmander", id: 2, image: "/img/pokemon/charmander.jpg", abilities: [] },
+    { name: "ditto", id: 3, image: "/img/pokemon/ditto.jpg", abilities: [] },
+    { name: "eevee", id: 4, image: "/img/pokemon/eevee.jpg", abilities: [] },
+    { name: "gengar", id: 5, image: "/img/pokemon/gengar.jpg", abilities: [] },
+    { name: "jigglypuff", id: 6, image: "/img/pokemon/jigglypuff.jpg", abilities: [] },
+    { name: "lapras", id: 7, image: "/img/pokemon/lapras.jpg", abilities: [] },
+    { name: "pikachu", id: 8, image: "/img/pokemon/pikachu.jpg", abilities: [] },
     // Add more Pokémon as needed
   ];
 
