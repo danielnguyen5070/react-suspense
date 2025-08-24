@@ -20,29 +20,28 @@ export function getPokemon(name: string, delay?: number): Promise<Pokemon> {
   pokemonCache.set(name, pokemonPromise);
   return pokemonPromise;
 }
+const nowAPI = Date.now();
 
 // https://pokeapi.co/api/v2/pokemon/
 async function getPokemonImpl(name: string, delay?: number): Promise<Pokemon> {
-  const param = new URLSearchParams({ q: name });
   if (delay) {
-    param.set("delay", delay.toString());
-    await new Promise(resolve => setTimeout(resolve, delay));
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
-  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}?${param.toString()}`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch Pokémon: ${response.statusText}`);
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}?ts=${nowAPI}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch data for Pokémon: ${name}`);
   }
-  const data: Pokemon = await response.json();
-  return data;
+  const pokemon: Pokemon = await res.json();
+  return pokemon;
 }
 
-const nowAPI = Date.now();
 export function getImageUrlForPokemon(pokemonName: string, now?: number): string {
   // Replace this with a third-party sprite service or fallback to the default one
   const time = now ?? nowAPI
   const sanitized = pokemonName.toLowerCase().replace(/\s+/g, "-");
   return `https://img.pokemondb.net/artwork/large/${sanitized}.jpg?ts=${time}`;
 }
+
 
 const filterCache = new Map<string, Promise<PokemonSearch>>();
 export function filterPokemons(query: string, delay?: number): Promise<PokemonSearch> {
@@ -68,21 +67,20 @@ async function filterPokemonsImpl(query: string, delay?: number): Promise<Pokemo
     pokemon.image = `/img/pokemon/${pokemon.name}.jpg`;
     return pokemon.name.includes(query.toLowerCase());
   });
-
 }
 
 const imageCache = new Map<string, Promise<string>>();
-export function getImage(src: string): Promise<string> {
-  const imagePromise = imageCache.get(src) ?? preloadImage(src);
-  imageCache.set(src, imagePromise);
-  return imagePromise;
+export function getImageSrc(url: string): Promise<string> {
+  const cached = imageCache.get(url) ?? preloadImage(url);
+  imageCache.set(url, cached);
+  return cached;
 }
 
-function preloadImage(src: string): Promise<string> {
+function preloadImage(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.src = src;
-    img.onload = () => resolve(src)
-    img.onerror = reject
+    img.src = url;
+    img.onload = () => resolve(url);
+    img.onerror = (err) => reject(err);
   });
 }

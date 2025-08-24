@@ -8,6 +8,7 @@ function PokemonDetails({
 }: {
     pokemonName: string;
 }) {
+    PokemonDetails.load(pokemonName)
     const pokemon = use(getPokemon(pokemonName));
     const pokemonImgUrl = pokemonName == "eevee" ? "eevee1" : getImageUrlForPokemon(pokemonName);
     return (
@@ -41,6 +42,11 @@ function PokemonDetails({
             </section>
         </div>
     );
+}
+
+PokemonDetails.load = (pokemonName: string) => {
+    getPokemon(pokemonName)
+    getImageSrc(getImageUrlForPokemon(pokemonName))
 }
 
 function Img({ src, alt }: { src: string; alt: string; }) {
