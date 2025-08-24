@@ -1,28 +1,21 @@
+
 import { ErrorBoundary } from "react-error-boundary";
-import { getPokemon, getImageUrlForPokemon, getImage } from "./utils.tsx";
-import { use, Suspense } from "react";
+import { getPokemon, getImageUrlForPokemon, getImageSrc } from "./utils.tsx";
+import { Suspense, use } from "react";
 
 function PokemonDetails({
     pokemonName,
-    setPokemonName,
 }: {
     pokemonName: string;
-    setPokemonName: (name: string) => void;
 }) {
     const pokemon = use(getPokemon(pokemonName));
+    const pokemonImgUrl = pokemonName == "eevee" ? "eevee1" : getImageUrlForPokemon(pokemonName);
     return (
         <div className="text-center space-y-4 min-h-100">
             <div className="flex justify-center">
-                <ErrorBoundary FallbackComponent={ErrorFallback}
-                    onReset={() => {
-                        setPokemonName("bulbasaur"); // Reset the pokemon name
-                        // Reset the state of the app so the user can try again
-                    }}>
-                    <Suspense fallback={<ImgFallback alt={pokemon.name} />} key={pokemon.name}>
-                        <Img
-                            src={getImageUrlForPokemon(pokemon.name == 'ditto' ? 'xxx' : pokemon.name)}
-                            alt={pokemon.name}
-                        />
+                <ErrorBoundary FallbackComponent={ImgErrorFallback}>
+                    <Suspense fallback={<ImgSuspenseFallback />} key={pokemonImgUrl}>
+                        <Img src={pokemonImgUrl} alt={pokemon.name} />
                     </Suspense>
                 </ErrorBoundary>
             </div>
@@ -50,28 +43,16 @@ function PokemonDetails({
     );
 }
 
-function Img({ src = '', ...props }: React.ComponentProps<'img'>) {
-    const loadedSrc = use(getImage(src)); // resolves after preloading
-    return <img src={loadedSrc} className="w-64 h-64 object-contain" {...props} />;
+function Img({ src, alt }: { src: string; alt: string; }) {
+    const imgSrc = use(getImageSrc(src));
+    return <img src={imgSrc} alt={alt} className="w-64 h-64" />;
 }
 
-function ImgFallback({ ...props }: React.ComponentProps<'img'>) {
-    return <img src="/img/fallback-pokemon.png" className="w-64 h-64 object-contain" {...props} />;
+function ImgErrorFallback() {
+    return <img src="/img/error-pokemon.png" alt="error" className="w-64 h-64" />;
 }
 
-function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) {
-    return (
-        <div className="text-red-500">
-            <p>Error loading Pokémon details:</p>
-            <pre>{error.message}</pre>
-            <button
-                onClick={resetErrorBoundary}
-                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-            >
-                Try Again
-            </button>
-        </div>
-    );
+function ImgSuspenseFallback() {
+    return <img src="/img/fallback-pokemon.png" alt="error" className="w-64 h-64" />;
 }
-
 export default PokemonDetails

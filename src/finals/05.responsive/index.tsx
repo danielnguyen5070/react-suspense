@@ -14,9 +14,7 @@ function App() {
   });
 
   function handlePokemonChange(name: string) {
-    startTransition(() => {
-      setPokemonName(name);
-    });
+    startTransition(() => setPokemonName(name));
   }
 
   return (
@@ -32,26 +30,16 @@ function App() {
             style={{ opacity: showSpinner ? 0.6 : 1 }}
             className={`px-6 py-12 bg-white`}
           >
-            <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <ErrorBoundary FallbackComponent={PokemonErrorFallback}>
               <Suspense fallback={<PokemonFallback pokemonName={pokemonName} />}>
                 <PokemonDetails
                   pokemonName={pokemonName}
-                  setPokemonName={setPokemonName}
                 />
               </Suspense>
             </ErrorBoundary>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function ErrorFallback({ error }: { error: Error }) {
-  return (
-    <div className="text-center space-y-4">
-      <h2 className="text-2xl font-bold text-red-600">Error</h2>
-      <p className="text-red-500">{error.message}</p>
     </div>
   );
 }
@@ -79,6 +67,25 @@ function PokemonFallback({ pokemonName }: { pokemonName: string }) {
               <span className="font-medium">Loading</span>: <span>...</span>
             </li>
           ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+function PokemonErrorFallback({ error }: { error: Error }) {
+  return (
+    <div className="text-center space-y-4 animate-pulse min-h-100">
+      <div className="flex justify-center">
+        <img
+          src="/img/error-pokemon.png"
+          alt="Error"
+          className="w-64 h-64 object-contain"
+        />
+      </div>
+      <section>
+        <ul className="space-y-1">
+          {error.message}
         </ul>
       </section>
     </div>
